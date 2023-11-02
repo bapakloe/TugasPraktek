@@ -1,0 +1,124 @@
+from collections import deque
+import networkx as nx
+import matplotlib.pyplot as plt
+
+class NodeColour:
+    WHITE = 0
+    GRAY = 1
+    BLACK = 2
+
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.distance = 0
+        self.predecessor = None
+        self.colour = NodeColour.WHITE
+
+    def __str__(self):
+        return f"({self.data},d={self.distance})"
+
+class AdjacencyList:
+    def __init__(self):
+        self.nodes = {}
+
+    def add_edge(self, n1, n2):
+        if n1 in self.nodes:
+            self.nodes[n1].append(n2)
+        else:
+            self.nodes[n1] = [n2]
+
+    def bfs(self, s):
+        keys = self.nodes.keys()
+        for u in keys:
+            if u != s:
+                u.colour = NodeColour.WHITE
+                u.distance = float('inf')
+                u.predecessor = None
+        s.colour = NodeColour.GRAY
+        s.distance = 0
+        s.predecessor = None
+        q = deque()
+        q.append(s)
+
+        visualize_search_step(self, s, None)
+
+        while q:
+            u = q.popleft()
+            if u in self.nodes:
+                for v in self.nodes[u]:
+                    if v.colour == NodeColour.WHITE:
+                        v.colour = NodeColour.GRAY
+                        v.distance = u.distance + 1
+                        v.predecessor = u
+                        q.append(v)
+
+                        visualize_search_step(self, v, u)
+            u.colour = NodeColour.BLACK
+
+def visualize_search_step(graph, current_node, previous_node):
+    G = nx.DiGraph()
+
+    for node, neighbors in graph.nodes.items():
+        G.add_node(str(node.data))
+        for neighbor in neighbors:
+            G.add_edge(str(node.data), str(neighbor.data))
+
+    pos = {
+        "1": (0, 1),
+        "2": (1, 2),
+        "3": (1, 0),
+        "4": (2, 3),
+        "5": (2, 1),
+        "6": (2, -1),
+        "7": (3, 4),
+        "8": (3, 2),
+    }
+
+    pos = nx.spring_layout(G, pos=pos)
+
+    node_colors = []
+    edge_colors = []
+
+    for node in G.nodes:
+        if current_node is not None and node == str(current_node.data):
+            node_colors.append("yellow")
+        elif previous_node is not None and node == str(previous_node.data):
+            node_colors.append("lightgreen")
+        else:
+            node_colors.append("lightblue")
+
+    for edge in G.edges:
+        edge_colors.append("black")
+
+    plt.clf()
+    nx.draw(G, pos, with_labels=True, node_size=1000, node_color=node_colors, edge_color=edge_colors)
+    plt.pause(1)  # Jeda untuk visualisasi
+
+    # Cetak hasil pencarian pada terminal
+    print(f"Current Node: {current_node}, Previous Node: {previous_node}")
+
+if __name__ == "__main__":
+    graph = AdjacencyList()
+
+    nA = Node("A")
+    nB = Node("B")
+    nC = Node("C")
+    nD = Node("D")
+    nE = Node("E")
+    nF = Node("F")
+    nG = Node("G")
+    nH = Node("H")
+    nI = Node("I")
+
+    graph.add_edge(nF, nB)
+    graph.add_edge(nF, nG)
+    graph.add_edge(nB, nA)
+    graph.add_edge(nB, nD)
+    graph.add_edge(nG, nI)
+    graph.add_edge(nD, nC)
+    graph.add_edge(nD, nE)
+    graph.add_edge(nI, nH)
+    
+    graph.bfs(nF)
+
+    plt.show()
